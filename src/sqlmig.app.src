@@ -3,6 +3,7 @@
   {description, "SQL migration toolkit"},
   {vsn, "1.0.0"},
   {registered, []},
+  {modules, []},
   {applications, [
                   kernel,
                   stdlib
