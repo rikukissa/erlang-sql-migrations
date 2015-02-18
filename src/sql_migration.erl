@@ -19,7 +19,7 @@ migrations(App) ->
 
 migrate(Conn, Version, Migrations) ->
     BinVersion = atom_to_binary(Version, latin1),
-    case pgsql:squery(Conn, "SELECT id FROM migrations ORDER BY id DESC") of
+    case epgsql:squery(Conn, "SELECT id FROM migrations ORDER BY id DESC") of
         {error,{error,error,<<"42P01">>,_,_}} ->
             %% init migrations and restart
             init_migrations(Conn),
@@ -30,9 +30,9 @@ migrate(Conn, Version, Migrations) ->
             %% upgrade path
             TopAtom = binary_to_atom(Top, latin1),
             Upgrade = lists:dropwhile(fun (V) -> V =< TopAtom end, Migrations),
-            [ begin 
+            [ begin
                   M:upgrade(Conn),
-                  pgsql:equery(Conn,
+                  epgsql:equery(Conn,
                                "INSERT INTO migrations (id) "
                                "VALUES ($1)", [atom_to_binary(M, latin1)])
               end || M <- Upgrade ],
@@ -41,9 +41,9 @@ migrate(Conn, Version, Migrations) ->
             %% downgrade path
             TopAtom = binary_to_atom(Top, latin1),
             Downgrade = lists:takewhile(fun (V) -> V >= TopAtom end, lists:reverse(Migrations)),
-            [ begin 
+            [ begin
                   M:downgrade(Conn),
-                  pgsql:equery(Conn,
+                  epgsql:equery(Conn,
                                "DELETE FROM migrations WHERE id = $1",
                                [atom_to_binary(M, latin1)])
               end || M <- Downgrade ],
@@ -51,9 +51,9 @@ migrate(Conn, Version, Migrations) ->
         {ok, _, []} ->
             %% full upgrade path
             Upgrade = Migrations,
-            [ begin 
+            [ begin
                   M:upgrade(Conn),
-                  pgsql:equery(Conn,
+                  epgsql:equery(Conn,
                                "INSERT INTO migrations (id) "
                                "VALUES ($1)", [atom_to_binary(M, latin1)])
               end || M <- Upgrade ],
@@ -63,7 +63,7 @@ migrate(Conn, Version, Migrations) ->
 
 %% Private
 init_migrations(Conn) ->
-    {ok, _, _} = pgsql:squery(Conn,
+    {ok, _, _} = epgsql:squery(Conn,
                               "CREATE TABLE migrations ("
                               "id VARCHAR(255) PRIMARY KEY,"
                               "datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
