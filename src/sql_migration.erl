@@ -20,7 +20,7 @@ migrations(App) ->
 migrate(Conn, Version, Migrations) ->
     BinVersion = atom_to_binary(Version, latin1),
     case epgsql:squery(Conn, "SELECT id FROM migrations ORDER BY id DESC") of
-        {error,{error,error,<<"42P01">>,_,_}} ->
+        {error,{error,error,<<"42P01">>,_,_,_}} ->
             %% init migrations and restart
             init_migrations(Conn),
             migrate(Conn, Version, Migrations);
